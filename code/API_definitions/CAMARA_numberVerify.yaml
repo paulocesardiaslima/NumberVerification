@@ -2,8 +2,22 @@ openapi: 3.0.0
 info:
   title: CAMARA numberVerify
   version: 1.0.0
+  description: |
+
+    **Authentication**
+    Configure security access keys such as OAuth 2.0 client credentials to be used by Client applications which will invoke the numberVerify API.
+    
+############################################################################
+#                                     Security                             #
+############################################################################
+security:
+  - oAuth2:
+      - 'authorize:read'
+      - 'authorize:write'
+    
 servers:
   - url: https://mobileconnect.telekom.de
+  - url: https://api.timbrasil.com.br
 tags:
   - name: Verified MSISDN
 paths:
@@ -12,6 +26,7 @@ paths:
       tags:
         - Verified MSISDN
       summary: Authorize
+      description: Authorize authenticated via oAuth2
       parameters:
         - name: response_type
           in: query
@@ -63,12 +78,42 @@ paths:
           schema:
             type: string
           description: client_id provided by MNO for mc vm match api consumption
-          example: '{client_id}'
+          example: '+5511985231234'
+        ### New parameters proposed by TIM  ###
+        - name: X-Request-deviceIp
+          in: header
+          required: false
+          schema:
+            type: string
+            format: ip
+          example: 100.71.23.123
+        - name: X-Request-devicePort
+          in: header
+          required: false
+          schema:
+            type: integer
+            format: int32
+          example: 1234
+        ###  
       responses:
         '200':
           description: Successful response
           content:
             application/json: {}
+        ### New codes proposed by TIM  ###
+        '404':
+          $ref: '#/components/responses/ResNotFound'
+        '500':
+          $ref: '#/components/responses/GenericError'
+        '504':
+          $ref: '#/components/responses/BackendConnTimeout'
+        "401":
+          $ref: "#/components/responses/Generic401"
+        "403":
+          $ref: "#/components/responses/Generic403"
+        "503":
+          $ref: "#/components/responses/Generic503"
+        ###  
   /token:
     post:
       tags:
@@ -156,7 +201,7 @@ paths:
                 correlation_id: vm_match
                 received_correlation_id: 'true'
                 mc_claims:
-                  device_msisdn: '+4915164816329'
+                  device_msisdn: '+5511985231234'
       parameters:
         - name: Content-Type
           in: header
@@ -169,6 +214,7 @@ paths:
             type: string
           description: access_token
           example: Bearer hIiC6ksKeD7olGcdW7-KcsKrX0kMEEm_NEtRdE2Le9k
+          
       responses:
         '200':
           description: OK
@@ -234,3 +280,125 @@ paths:
                     sub: c1be197e-4314-4dd9-bd3e-26002004b468b5a9dc43
                     correlation_id: vm_match
                     device_msisdn_verified: false
+
+ #######################################################
+ #  RESOURCES
+ #######################################################
+components:
+  schemas: 
+ ######################################################
+ #  RESPONSES
+ #######################################################            
+    ErrResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: OK
+    ErrorInfo:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Code given to this error
+        message:
+          type: string
+          description: Detailed error description
+  responses:
+    ResNotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrResponse'
+          example:
+            status: ERROR
+            message: Resource not found
+    GenericError:
+      description: An unknow error has occurred
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrResponse'
+          example:
+            status: ERROR
+            message: Generic error
+    BackendConnTimeout:
+      description: Connection timeout towards backend service has occurred
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrResponse'
+          example:
+            status: ERROR
+            message: Backend connection timeout
+    OkDeleted:
+      description: The resource has been successfully deleted
+      content:
+        application/json:
+          example:
+            status: OK
+            message: Deleted
+    Generic400:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: INVALID_INPUT
+            message: "Schema validation failed at  ..."
+    Generic401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: UNAUTHORIZED
+            message: "Authorization failed: ..."
+    Generic403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: FORBIDDEN
+            message: "Operation not allowed: ..."
+    SessionNotFound404:
+      description: Session not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: NOT_FOUND
+            message: "Session Id does not exist"
+    Generic503:
+      description: Service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: SERVICE_UNAVALIBLE
+            message: "Service unavailable"  
+  
+  securitySchemes:
+    oAuth2:    
+      type: oauth2
+      description: This API uses OAuth 2 [More info](https://api.example.com/docs/auth)
+      flows:        
+        clientCredentials:
+          tokenUrl: 'https://example.com/oauth/token'
+          scopes:
+            'authorize:read': Grant read-only authorize data
+            'authorize:write': Grant write access to authorize data
+
