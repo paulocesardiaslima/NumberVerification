@@ -2,8 +2,96 @@ openapi: 3.0.0
 info:
   title: CAMARA numberVerify
   version: 1.0.0
+  description: |
+    ## Overview
+    Validates that the MSISDN of the mobile device connected via the cellular network is using the IP address of the connection to the server of the service that is querying the API.
+    
+    ## 1. Introduction
+    
+    The CAMARA numberVerify API provides a service to MNO single sign-on for mobile applications (confirmation of subscriber number and IP used for application authentication without the need to use SMS or passwords).
+    
+    ## 2. Quick Start
+ 
+    - The Mobile User inform MSISDN to verification.
+    
+    - BackEnd APP or Web Partner Application Server pass the IP address to TIM API GTW to validate MSISDN. 
+    
+    - TIM API GTW expose a standard Openverse API CAMARA numberVerify for NumberVerification.
+    
+    Before starting to use the API, the developer needs to know about the below specified details:
+        
+    **consentGranted**
+    
+    Indicates whether operator have consent from mobile phone number's owner to perform this request.
+     
+    **device_msisdn**
+    
+    Mobile phone number (MSISDN) to verify. The number must be in international format.
+     
+    **deviceIp**
+    
+    IPv4 or IPv6 address of the mobile device that will be verified with operator. 
+     
+    **devicePort**
+    
+    Port of the mobile device that will be verified with operator. Can be used only when "deviceIp" is also provided.
+     
+    **callbackUrl**
+    
+    Your URL that will be called to provide verification result when the process is complete. 
+     
+    **returnUrl**
+    
+    An URL to which the mobile device will be redirected to when verification is complete.
+     
+    As assumption we considering to verify the phone number of the device connected to our the mobile data network 4G and 5G.
+
+    ## 3. Authentication and Authorization
+    
+    The numberVerify API makes use of the client credentials grant which is applicable for server to server use cases involving trusted partners or clients.
+    In this method the API invoker client is registered as a confidential client with an authorization grant type of client\_credentials.
+    
+    Configure security access keys such as OAuth 2.0 client credentials to be used by Client applications which will invoke the numberVerify API.
+    
+    ## 4. API Documentation
+    ## 4.1 Details    
+    
+    ### 4.1.1 User Stories
+    - A service provider server serving a client application (Android or IOS app, or Web app), connected through cellular network, needs to validate the MSISDN of a user. 
+    
+    - To do this, it asks the user to enter their MSISDN, and then server(SP) executes the NumberVerification API, informing the MSISDN and the IP address of the cellular access of the client in question, used to inform the MSISDN to the server.
+    
+    - If the informed IP address is in use by the
+    informed MSISDN, the API will return “OK” for the match. Otherwise, it will report “NOK”
+    
+    ### 4.1.2 API E2E Flows:
+    - Mobile phone user with a mobile device connected via the cellular network accesses a service available on the public internet. 
+    
+    - This service provider asks for the MSISDN of the device and retrieves the access IP of that device.
+    
+    - NumberVerification call MNO server, informing MSISDN and public IP of the access.
+    
+    - API checks if there is a match between MSISDN and public IP on the operator
+    
+    - API responds to the server the result of the match check = OK/NOK
+        
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+externalDocs:
+  description: Product documentation at Camara
+  url: https://github.com/camaraproject/        
+    
+############################################################################
+#                                     Security                             #
+############################################################################
+security:
+  - oAuth2:
+      - 'authorize:read'
+
 servers:
-  - url: https://mobileconnect.telekom.de
+  - url: https://api.timbrasil.com.br
 tags:
   - name: Verified MSISDN
 paths:
@@ -12,6 +100,7 @@ paths:
       tags:
         - Verified MSISDN
       summary: Authorize
+      description: Authorize authenticated via oAuth2
       parameters:
         - name: response_type
           in: query
@@ -63,7 +152,7 @@ paths:
           schema:
             type: string
           description: client_id provided by MNO for mc vm match api consumption
-          example: '{client_id}'
+          example: 'client_id'
       responses:
         '200':
           description: Successful response
@@ -156,7 +245,7 @@ paths:
                 correlation_id: vm_match
                 received_correlation_id: 'true'
                 mc_claims:
-                  device_msisdn: '+4915164816329'
+                  device_msisdn: '+5511985231234'
       parameters:
         - name: Content-Type
           in: header
@@ -169,6 +258,39 @@ paths:
             type: string
           description: access_token
           example: Bearer hIiC6ksKeD7olGcdW7-KcsKrX0kMEEm_NEtRdE2Le9k
+        ### New parameters proposed by TIM  ###
+        - name: X-Request-consentGranted
+          in: header
+          required: false
+          schema:
+            type: boolean
+          example: true
+        - name: X-Request-deviceIp
+          in: header
+          required: false
+          schema:
+            type: string
+            format: ip
+          example: 100.71.23.123
+        - name: X-Request-devicePort
+          in: header
+          required: false
+          schema:
+            type: integer
+            format: int32
+          example: 1234
+        - name: X-Request-callbackUrl
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: X-Request-returnUrl
+          in: header
+          required: false
+          schema:
+            type: string
+        ###  
+          
       responses:
         '200':
           description: OK
@@ -234,3 +356,140 @@ paths:
                     sub: c1be197e-4314-4dd9-bd3e-26002004b468b5a9dc43
                     correlation_id: vm_match
                     device_msisdn_verified: false
+                    
+        ### New codes proposed by TIM  ###
+        '404':
+          $ref: '#/components/responses/ResNotFound'
+        '500':
+          $ref: '#/components/responses/GenericError'
+        '504':
+          $ref: '#/components/responses/BackendConnTimeout'
+        "401":
+          $ref: "#/components/responses/Generic401"
+        "403":
+          $ref: "#/components/responses/Generic403"
+        "503":
+          $ref: "#/components/responses/Generic503"
+        ###  
+                    
+
+ #######################################################
+ #  RESOURCES
+ #######################################################
+components:
+  schemas: 
+ ######################################################
+ #  RESPONSES
+ #######################################################            
+    ErrResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: OK
+    ErrorInfo:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Code given to this error
+        message:
+          type: string
+          description: Detailed error description
+  responses:
+    ResNotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrResponse'
+          example:
+            status: ERROR
+            message: Resource not found
+    GenericError:
+      description: An unknow error has occurred
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrResponse'
+          example:
+            status: ERROR
+            message: Generic error
+    BackendConnTimeout:
+      description: Connection timeout towards backend service has occurred
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrResponse'
+          example:
+            status: ERROR
+            message: Backend connection timeout
+    OkDeleted:
+      description: The resource has been successfully deleted
+      content:
+        application/json:
+          example:
+            status: OK
+            message: Deleted
+    Generic400:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: INVALID_INPUT
+            message: "Schema validation failed at  ..."
+    Generic401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: UNAUTHORIZED
+            message: "Authorization failed: ..."
+    Generic403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: FORBIDDEN
+            message: "Operation not allowed: ..."
+    SessionNotFound404:
+      description: Session not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: NOT_FOUND
+            message: "Session Id does not exist"
+    Generic503:
+      description: Service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorInfo"
+          example:
+            code: SERVICE_UNAVALIBLE
+            message: "Service unavailable"  
+  
+  securitySchemes:
+    oAuth2:    
+      type: oauth2
+      description: This API uses OAuth 2 [More info](https://api.example.com/docs/auth)
+      flows:        
+        clientCredentials:
+          tokenUrl: 'https://example.com/oauth/token'
+          scopes:
+            'authorize:read': Grant read-only authorize data
+
