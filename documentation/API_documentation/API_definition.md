@@ -1,192 +1,397 @@
-# Reference
-CAMARA Number Verify is based on Mobile Connect Verified MSISDN standardized product:
+---
+title: CAMARA numberVerify v1.0.0
+language_tabs: []
+toc_footers:
+  - <a href="https://github.com/camaraproject/">Product documentation at
+    Camara</a>
+includes: []
+search: true
+highlight_theme: darkula
+headingLevel: 2
 
-[IDY.54](assets/docs/(placeholder4MCspec).docx)
+---
 
-**IDY.54 Mobile Connect Verified MSISDN Definition and Technical Requirements** 
+<!-- Generator: Widdershins v4.0.1 -->
 
-## About Mobile Connect
+<h1 id="camara-numberverify">CAMARA numberVerify v1.0.0</h1>
 
-Mobile Connect is a worldwide initiative by Mobile Operators to bring a wide portfolio of Identity services to market that enable SPs and End-Users to transact with one-another more securely through strong authentication, authorisation and exchange of attributes, subject to User consent.
+> Scroll down for example requests and responses.
 
-The Mobile Connect architecture consists of a Core framework around which additional components can be added to support the different Mobile Connect services as well as other API based services that delivers value to the customer. The Core framework is based upon the OpenID Connect (OIDC) protocol suite and allows Users to be identified by their MSISDN (or a related Pseudonymous Customer Reference) to enable authentication on their mobile device. Attributes sharing services are based upon the OAUTH2.0 framework - Client Credentials grant.
+## Overview
+Validates that the MSISDN of the mobile device connected via the cellular network is using the IP address of the connection to the server of the service that is querying the API.
 
-## Number Verify / Verified MSISDN definition
+## 1. Introduction
 
-Mobile Connect Verified MSISDN allows Developer // Service Provider (SP) to verify the MSISDN (phone number) of the device connected to the mobile data network through which a User is accessing an SP service. In doing so, it enables the SP to check that the device being used to access a particular SP User account belongs to the account holder. Such a service can also be used by theSP for verifying the User’s device as a complementary service when a User is being authenticated.
+The CAMARA numberVerify API provides a service to MNO single sign-on for mobile applications (confirmation of subscriber number and IP used for application authentication without the need to use SMS or passwords).
 
-Mobile Connect Verified MSISDN is defined as two service variants:
+## 2. Quick Start
 
-- **Verified MSISDN Match**: in which the Mobile Operator compares the MSISDN associated with the mobile device against that provided by the SP in the service request1. The MSISDN can be supplied in an E164 format [5] or in a hashed form. Verified MSISDN Match ensures no data is shared by the Mobile Operator.
-- **Verified MSISDN Share**: in which the Mobile Operator provides the mobile device MSISDN to the SP who can then perform the check itself
+- The Mobile User inform MSISDN to verification.
 
-Note that the Verified MSISDN service only works for devices which have an active mobile data bearer. It will not work via another data connection such as WiFi.
+- BackEnd APP or Web Partner Application Server pass the IP address to TIM API GTW to validate MSISDN. 
 
-## Use Case examples
+- TIM API GTW expose a standard Openverse API CAMARA numberVerify for NumberVerification.
 
-Mobile Connect Verified MSISDN supports a range of practical use cases including:
+Before starting to use the API, the developer needs to know about the below specified details:
+    
+**consentGranted**
 
-    1. Android Account Setup 
-    2. Mobile Banking App installation and password-less login 
-    3. Android password-less login
-    4. RCS client installation / configuration
-    5. Posting online ad or reviews on a website
-    6. Verified MSISDN service as the second factor authentication 
+Indicates whether operator have consent from mobile phone number's owner to perform this request.
+ 
+**device_msisdn**
 
-Some examples are listed below in more detail to explain the use of Verified MSISDN.
+Mobile phone number (MSISDN) to verify. The number must be in international format.
+ 
+**deviceIp**
 
-### Android device upgrade (Google)
+IPv4 or IPv6 address of the mobile device that will be verified with operator. 
+ 
+**devicePort**
 
-Verified MSISDN service could be used as an additional authentication step to provide more confidence to Google when a User first logs in on a new device with their Google credentials. When upgrading to a new/different Android phone, the User needs to enter their Google credentials to personalize the device - at this point, Google need additional confirmation that the individual entering the credentials is the legitimate account owner and not an attacker.
+Port of the mobile device that will be verified with operator. Can be used only when "deviceIp" is also provided.
+ 
+**callbackUrl**
 
-Google typically solve this issue through the use of SMS OTP but would prefer to use an Mobile Operator API such as Verified MSISDN to verify the association of device to the User without creating friction within the User experience when upgrading to a new Android phone.
+Your URL that will be called to provide verification result when the process is complete. 
+ 
+**returnUrl**
 
-### Password-less login
+An URL to which the mobile device will be redirected to when verification is complete.
+ 
+As assumption we considering to verify the phone number of the device connected to our the mobile data network 4G and 5G.
 
-A separate but related problem is that it is quite common for a User to forget their Google credentials altogether and need to establish a new set (and new identity) in order to activate their Android device - this creates friction for the User, but also presents a service continuity issue for Google.
+## 3. Authentication and Authorization
 
-An alternative approach for verifying a new Android device would be for Google to adopt the User's phone number as the username, and possession/control of the Android device associated with that phone number as an implicit factor of authentication. This approach is simple and can then be combined with a lightweight knowledge factor (e.g., related to their Google or mobile account) to sign the User in and mitigate SIM swap fraud.
+The numberVerify API makes use of the client credentials grant which is applicable for server to server use cases involving trusted partners or clients.
+In this method the API invoker client is registered as a confidential client with an authorization grant type of client\_credentials.
 
-### Mobile Banking App & Apple/Android Pay installation
+Configure security access keys such as OAuth 2.0 client credentials to be used by Client applications which will invoke the numberVerify API.
 
-Similar to the Android upgrade use case, whenever a User wishes to install and/or configure a new SP app on their device, it is important that the SP can check that the device on which the app is being installed is associated with the User in question to mitigate against an attacker gaining access to a User's account by entering the User's credentials (username/password) via their own device. Mobile banking is a good example of this, the bank needing to ensure that the device upon which a mobile banking app is being installed is associated with the same phone number as on file for the bank account for that User.
+## 4. API Documentation
+## 4.1 Details    
 
-A similar use case is where a User requests their debit/credit card to be tokenised and installed on their mobile phone (e.g., for use within Apple Pay, Samsung Pay, Android Pay etc.) and it is important that the issuing bank can verify that the User making the request is the same as the cardholder – by verifying that the phone number associated with the device upon which the debit/credit card will be installed is the same as the phone number on file for the cardholder (and matching other attributes such as name & address registered against that phone number), the issuing bank can mitigate against fraud.
+### 4.1.1 User Stories
+- A service provider server serving a client application (Android or IOS app, or Web app), connected through cellular network, needs to validate the MSISDN of a user. 
 
-## Verified MSISDN Functional Description
+- To do this, it asks the user to enter their MSISDN, and then server(SP) executes the NumberVerification API, informing the MSISDN and the IP address of the cellular access of the client in question, used to inform the MSISDN to the server.
 
-### Verified MSISDN Service Flow
+- If the informed IP address is in use by the
+informed MSISDN, the API will return “OK” for the match. Otherwise, it will report “NOK”
 
-The SP must initiate the Verified MSISDN request via the User’s mobile device which is directly connected to the mobile data network. The Mobile Operator ID GW must support **HTTP Header enrichment or a similar mechanism to be able to extract the User’s MSISDN from the mobile data network.** Verified MSIDN will not work if the device is on Wi-Fi or on a mobile hotspot.
+### 4.1.2 API E2E Flows:
+- Mobile phone user with a mobile device connected via the cellular network accesses a service available on the public internet. 
 
-Because Mobile Connect Verified MSISDN requires the use of the mobile data network it may be that the SP app includes a feature to allow switching the data bearer to ensure that the mobile data network is used.
+- This service provider asks for the MSISDN of the device and retrieves the access IP of that device.
 
-**Figure 1** shows a high-level flow for a Verified MSISDN service request. The use case shown is one of registering a mobile app to allow password-less log-in. 
-- This User is installing an SP’s mobile app on their device and in response to the prompt, the User enters their phone number.
-- The SP educates the User about the need to perform number verification whenever the User attempts to login in the future. The SP provides further details such as revocation mechanism in a linked page (shown as “Learn more”).
-- The User is asked to provide long-lived consent to the SP. The use of data needs to be clearly stated in terms of the service and the privacy policy.
+- NumberVerification call MNO server, informing MSISDN and public IP of the access.
 
-![Figure 1 - Mobile Connect Verified MSISDN Service Flow](./assets/images/figure1.png)
+- API checks if there is a match between MSISDN and public IP on the operator
 
-The service flow is as follows:
+- API responds to the server the result of the match check = OK/NOK
 
-- The SP’s app initiates a Mobile Connect Verified MSISDN service request towards the Mobile Operator’s ID GW Authorization endpoint using Mobile Connect Device-Initiated mode. The SP specifies the service required using the scope parameter to indicate whether Verified MSISDN Share, Verified MSISDN Match (Plain) or Verified MSISDN Match (Hashed) is required.
-  - In this example, it is assumed that the SP already has the relevant Mobile Operator ID GW metadata and credentials to be able to initiate a service request to the correct Mobile Operator ID GW for that User. If not available, then this can be obtained by using the API Exchange Discovery service or by obtaining the details directly from the Mobile Operator.
-- The Mobile Operator’s ID GW validates the request (i.e. that the SP has been registered with the Mobile Operator for the Mobile Connect Verified MSISDN service requested)
-- The ID GW optionally can check that the source is from a known IP range (white listed)
-- The Mobile Operator ID GW checks whether the User is registered for Mobile Connect
-- If the MSISDN is not yet registered for Mobile Connect, based on ID GW policies a new Mobile Connect account may be created “on-the-fly” for that MSISDN. 
-- The Mobile Operator retrieves the MSISDN from the IP Header (or uses an alternate mechanism to obtain the network-authenticated MSISDN for that device)
+Base URLs:
 
-In order to be able to share (or match) User information with a SP, the User must give their consent. 
+* <a href="https://api.timbrasil.com.br">https://api.timbrasil.com.br</a>
 
-> **Figure 1** illustrates the option where the Mobile Operator ID GW captures User consent which, within the context of this use case, might be at initial registration for the SP service.
->
-> User consent can also be captured by the SP, subject to the Mobile Operator’s ID GW consent policies and the contractual agreement with the SP. 
->
-> Consent can also be long-lived where it exists for an extended period of time to provide a smoother User experience.
->
-> If consent is not required (i.e. the User has already given their consent) then this step can be omitted.
+License: <a href="https://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0</a>
 
-- An Authorization Code is then returned to the SP as part of a standard Device-Initiated flow and the SP can then retrieve the ID Token and Access Token by make a Token Request to the ID GW Token endpoint.
-- For Verified MSISDN Share the SP can then make a Resource Request to the Resource endpoint with the Access Token to fetch the MSISDN of the device. 
-- For Verified MSISDN Match the SP can fetch the MSISDN match result by making a Resource Request with the Access Token and including the appropriate attribute identifier and value within the mc_claims parameter:
-  - The attribute identifier is  “device_msisdn” with a value of the MSISDN in plain text if scope= ”mc_vm_match” was specified in the service request.
-  - The attribute identifier is “device_msisdn_hash”  with a value of the hash of the MSISDN if scope=”mc_vm_match_hash” was specified in the service request.
-- The Resource Server matches the attribute value with the previously extracted MSISDN or hash of the MSISDN extracted by the Authorization Server. If they match, the service returns a Boolean value “true” to the SP. 
-- If the verification fails, then it returns a Boolean value “false” to the SP. 
+# Authentication
 
+- oAuth2 authentication. This API uses OAuth 2 [More info](https://api.example.com/docs/auth)
 
-### User Consent Management
+    - Flow: clientCredentials
 
-The Mobile Connect Verified MSISDN service is designed to be used as a fraud check so typically, User consent will be captured by the SP (at registration and /or included within standard terms and conditions) and the service will be processed in the background without any explicit User consent.
+    - Token URL = [https://example.com/oauth/token](https://example.com/oauth/token)
 
-## Verified MSISDN Service Specification
+|Scope|Scope Description|
+|---|---|
+|authorize:read|Grant read-only authorize data|
 
-### OIDC Authorization Request Parameters - scope
+<h1 id="camara-numberverify-verified-msisdn">Verified MSISDN</h1>
 
-The SP requests Mobile Connect Verified MSISDN services via the scope parameter in the Mobile Connect OIDC Authorization Request as per Table 1.
+## get__authorize
 
-**Table 1 - Mobile Connect Verified MSISDN scope Values**
-|Mobile Connect Verified MSISDN|OIDC Authorization Request scope Parameter|
-|:---|:---|
-|Mobile Connect Verified MSISDN Share [plain]|“mc_vm_share”|
-|Mobile Connect Verified MSISDN Match [plain]|“mc_vm_match”|
-|Mobile Connect Verified MSISDN Match [hashed]|“mc_vm_match_hash”|
+> Code samples
 
-### API details
+`GET /authorize`
 
-Mobile Connect Verified MSISDN is only supported in Device-Initiated mode where the User is accessing an online SP service via their mobile device using a mobile data connection.
+*Authorize*
 
-[MC Device Initiated mode](assets/yaml/MC_di_v2.3-build_14.yaml)
+Authorize authenticated via oAuth2
 
-### Verified MSISDN Match details
+<h3 id="get__authorize-parameters">Parameters</h3>
 
-For Mobile Connect Verified MSISDN Match, the MSISDN that the SP wishes to match against the device MSISDN captured by the Mobile Operator ID GW is submitted as part of the Resource Request.
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|response_type|query|string|false|none|
+|scope|query|string|false|none|
+|version|query|string|false|none|
+|redirect_uri|query|string|false|none|
+|nonce|query|integer|false|none|
+|prompt|query|string|false|none|
+|state|query|string|false|none|
+|correlation_id|query|string|false|none|
+|acr_values|query|integer|false|none|
+|client_id|query|string|false|client_id provided by MNO for mc vm match api consumption|
 
-For Mobile Connect Verified MSISDN Match one of the attribute identifiers and associated value shown in **Table 2** must be included in the Resource Request depending upon the scope value specified in the OIDC Authorization Request. 
+> Example responses
 
-**Table 2 - Mobile Connect Verified MSISDN Match – Attribute Identifiers and Values for the Resource Request**
+<h3 id="get__authorize-responses">Responses</h3>
 
-|Attribute Identifier|Type|Description|
-|:---|:---:|:---|
-|device_msisdn|String|The value is the MSISDN to be verified. E.164 format is RECOMMENDED|
-|device_msisdn_hash|String|Hashed value of MSISDN to be verified. SHA256 algorithm recommended.|
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful response|None|
 
-The Resource Request contains a JSON Payload with the mc_claims parameter which contains the requested service scope value (e.g. “mc_vm_match_hash”) followed by the appropriate attribute identifier, as defined in **Table 2**, and the value (hashed value in this case) to be matched. For example, based on an Mobile Connect Verified MSISDN Match (Hashed) service request, the Resource Request would be as follows:
+<h3 id="get__authorize-responseschema">Response Schema</h3>
 
->POST /connect/mc_vm HTTP/1.1.
-user-Agent: XXXXXXXXXX
-Host: mc-idgw-Operator.example.com.
-Authorization: Bearer LTRjZDMtNDUyYi1iNjk.
-Content-Type: application/json.
-Accept: application/json.
-Content-Length: 73.
-.
+<aside class="warning">
+To perform this operation, you must be authenticated by means of one of the following methods:
+oAuth2 ( Scopes: authorize:read )
+</aside>
+
+## post__token
+
+> Code samples
+
+`POST /token`
+
+*Token*
+
+> Body parameter
+
+<h3 id="post__token-parameters">Parameters</h3>
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|Content-Type|header|string|false|none|
+|Authorization|header|string|false|base64(client_id:client_secret)|
+|grant_type|query|string|false|none|
+|code|query|string|false|none|
+|correlation_id|query|string|false|none|
+|redirect_uri|query|string|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
 {
-    "mc_claims":
-    {
-        "device_msisdn_hash":"3d84a3838599719df7deacc7fb91903bde5430a8c0e007c3eba93bce0c69c5a2"
-        }
-    }
+  "access_token": "hIiC6ksKeD7olGcdW7-KcsKrX0kMEEm_NEtRdE2Le9k",
+  "id_token": "{id_token}",
+  "correlation_id": "vm_match",
+  "token_type": "Bearer",
+  "expires_in": "500"
+}
+```
 
-based on an Mobile Connect Verified MSISDN Match (Plain) service request, the Resource Request would be as follows:
+<h3 id="post__token-responses">Responses</h3>
 
->POST /connect/mc_vm HTTP/1.1.
-user-Agent: XXXXXXXXXX
-Host: mc-idgw-Operator.example.com.
-Authorization: Bearer LTRjZDMtNDUyYi1iNjk.
-Content-Type: application/json.
-Accept: application/json.
-Content-Length: 73.
-.
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|OK|Inline|
+
+<h3 id="post__token-responseschema">Response Schema</h3>
+
+### Response Headers
+
+|Status|Header|Type|Format|Description|
+|---|---|---|---|---|
+|200|Date|string||none|
+|200|Content-Type|string||none|
+|200|Transfer-Encoding|string||none|
+|200|Connection|string||none|
+|200|Strict-Transport-Security|string||none|
+
+<aside class="warning">
+To perform this operation, you must be authenticated by means of one of the following methods:
+oAuth2 ( Scopes: authorize:read )
+</aside>
+
+## post__openid_userinfo
+
+> Code samples
+
+`POST /openid/userinfo`
+
+*User Info*
+
+> Body parameter
+
+```json
 {
-"mc_claims" : {
-               "device_msisdn" : "+44123456789"
-               }
-} 
+  "correlation_id": "vm_match",
+  "received_correlation_id": "true",
+  "mc_claims": {
+    "device_msisdn": "+5511985231234"
+  }
+}
+```
 
+<h3 id="post__openid_userinfo-parameters">Parameters</h3>
 
-**Table 3** shows the attribute identifier and associated value that is returned in the Resource Response for Mobile Connect Verified MSISDN Match. The response is the same irrespective of whether plain text or hashed values were submitted in the Resource Request.
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|Content-Type|header|string|false|none|
+|Authorization|header|string|false|access_token|
+|X-Request-consentGranted|header|boolean|false|none|
+|X-Request-deviceIp|header|string(ip)|false|none|
+|X-Request-devicePort|header|integer(int32)|false|none|
+|X-Request-callbackUrl|header|string|false|none|
+|X-Request-returnUrl|header|string|false|none|
+|body|body|object|false|none|
 
-**Table 3 - Mobile Connect Verified MSISDN Match – Returned Attributes in the Resource Response**
-|Attribute Identifier |Type|Usage Category|Description|
-|:---|:---:|:---:|:---|
-|device_msisdn_verified|Boolean|REQUIRED|Match result: “true” / “false”|
+> Example responses
 
-The following example shows the Resource Response for the Mobile Connect Verified MSISDN Match service. Note the same result is returned for both plain text and hashed variants.
+> OK
 
->HTTP/1.1 200 OK.
-Date: Tue, 03 Oct 2017 09:37:43 GMT.
-Server: XXXXXXX
-Expires: Thu, 19 Nov 1981 08:52:00 GMT.
-Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0.
-Pragma: no-cache.
-Content-Length: xx.
-Content-Type: application/json.
-.
+```json
 {
-  "sub": "cd45a691-d311-4134-9a0c-2747e5110d22"
+  "sub": "c1be197e-4314-4dd9-bd3e-26002004b468b5a9dc43",
+  "correlation_id": "vm_match",
   "device_msisdn_verified": true
 }
+```
+
+```json
+{
+  "sub": "c1be197e-4314-4dd9-bd3e-26002004b468b5a9dc43",
+  "correlation_id": "vm_match",
+  "device_msisdn_verified": false
+}
+```
+
+> 401 Response
+
+```json
+{
+  "code": "UNAUTHORIZED",
+  "message": "Authorization failed: ..."
+}
+```
+
+> 403 Response
+
+```json
+{
+  "code": "FORBIDDEN",
+  "message": "Operation not allowed: ..."
+}
+```
+
+> 404 Response
+
+```json
+{
+  "status": "ERROR",
+  "message": "Resource not found"
+}
+```
+
+> 500 Response
+
+```json
+{
+  "status": "ERROR",
+  "message": "Generic error"
+}
+```
+
+> 503 Response
+
+```json
+{
+  "code": "SERVICE_UNAVALIBLE",
+  "message": "Service unavailable"
+}
+```
+
+> 504 Response
+
+```json
+{
+  "status": "ERROR",
+  "message": "Backend connection timeout"
+}
+```
+
+<h3 id="post__openid_userinfo-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|OK|Inline|
+|401|[Unauthorized](https://tools.ietf.org/html/rfc7235#section-3.1)|Unauthorized|[ErrorInfo](#schemaerrorinfo)|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden|[ErrorInfo](#schemaerrorinfo)|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|The specified resource was not found|[ErrResponse](#schemaerrresponse)|
+|500|[Internal Server Error](https://tools.ietf.org/html/rfc7231#section-6.6.1)|An unknow error has occurred|[ErrResponse](#schemaerrresponse)|
+|503|[Service Unavailable](https://tools.ietf.org/html/rfc7231#section-6.6.4)|Service unavailable|[ErrorInfo](#schemaerrorinfo)|
+|504|[Gateway Time-out](https://tools.ietf.org/html/rfc7231#section-6.6.5)|Connection timeout towards backend service has occurred|[ErrResponse](#schemaerrresponse)|
+
+<h3 id="post__openid_userinfo-responseschema">Response Schema</h3>
+
+### Response Headers
+
+|Status|Header|Type|Format|Description|
+|---|---|---|---|---|
+|200|Date|string||none|
+|200|Content-Type|string||none|
+|200|Transfer-Encoding|string||none|
+|200|Connection|string||none|
+|200|X-Content-Type-Options|string||none|
+|200|X-XSS-Protection|string||none|
+|200|Cache-Control|string||none|
+|200|Pragma|string||none|
+|200|Expires|integer||none|
+|200|X-Frame-Options|string||none|
+|200|Strict-Transport-Security|string||none|
+
+<aside class="warning">
+To perform this operation, you must be authenticated by means of one of the following methods:
+oAuth2 ( Scopes: authorize:read )
+</aside>
+
+# Schemas
+
+<h2 id="tocS_ErrResponse">ErrResponse</h2>
+<!-- backwards compatibility -->
+<a id="schemaerrresponse"></a>
+<a id="schema_ErrResponse"></a>
+<a id="tocSerrresponse"></a>
+<a id="tocserrresponse"></a>
+
+```json
+{
+  "status": "OK",
+  "message": "OK"
+}
+
+```
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|status|string|false|none|none|
+|message|string|false|none|none|
+
+<h2 id="tocS_ErrorInfo">ErrorInfo</h2>
+<!-- backwards compatibility -->
+<a id="schemaerrorinfo"></a>
+<a id="schema_ErrorInfo"></a>
+<a id="tocSerrorinfo"></a>
+<a id="tocserrorinfo"></a>
+
+```json
+{
+  "code": "string",
+  "message": "string"
+}
+
+```
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|code|string|true|none|Code given to this error|
+|message|string|true|none|Detailed error description|
 
