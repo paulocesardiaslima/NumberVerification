@@ -89,6 +89,8 @@ externalDocs:
 security:
   - oAuth2:
       - 'authorize:read'
+  - bearerAuth:
+      - 'userinfo:read'
 
 servers:
   - url: https://api.timbrasil.com.br
@@ -492,4 +494,7 @@ components:
           tokenUrl: 'https://example.com/oauth/token'
           scopes:
             'authorize:read': Grant read-only authorize data
-
+    bearerAuth: 
+      type: http
+      scheme: bearer
+      bearerFormat: JWT   
